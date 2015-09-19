@@ -1,9 +1,17 @@
 'use strict';
 
+// Heavily inspired (aka copied) from https://github.com/devongovett
+
 var spawn = require('child_process').spawn;
 
 function sanitize(s) {
-	return '\'' + s.replace(/\'/g, '\'\\\'\'') + '\'';
+
+	// LINUX
+	if (typeof s === 'string' && process.platform !== 'win32')
+		s = '"' + s.replace(/(["\\$`])/g, '\\$1') + '"';
+
+	// WINDOWS
+	return s;
 }
 
 function PDFGenerator(config) {
@@ -39,13 +47,28 @@ PDFGenerator.prototype.run = function run(request, options) {
 	args.push(sanitize(request.url));
 	args.push('-');
 
-	// spawn the external process
-	var child = spawn('/bin/sh', ['-c', args.join(' ') + ' | cat']);
-	var stream = child.stdout;
+	var child;
+
+	// WINDOWS - spawn the external process
+	if (process.platform === 'win32') {
+		child = spawn(args[0], args.slice(1));
+	}
+
+	// LINUX - spawn the external process (this nasty business prevents piping problems)
+	else {
+		child = spawn('/bin/sh', ['-c', args.join(' ') + ' | cat']);
+	}
+
 
 	// handle errors
-	child.on('error', function(err) { stream.emit('error', err); });
-	child.stderr.on('data', function(err) { stream.emit('error', new Error((err || '').toString().trim())); });
+	var stream = child.stdout;
+	function handleError(err) {
+		child.kill();
+		stream.emit('error', err);
+	}
+
+	child.once('error', function(err) { handleError(err); });
+	child.stderr.once('data', function(err) { handleError(new Error((err || '').toString().trim())); });
 
 	// send metadata
 	setImmediate(function(){
