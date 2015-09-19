@@ -68,7 +68,7 @@ PDFGenerator.prototype.run = function run(request, options) {
 	}
 
 	child.once('error', function(err) { handleError(err); });
-	child.stderr.once('data', function(err) { handleError(new Error((err || '').toString().trim())); });
+	child.stderr.once('data', function(err) { stream.emit('warning', new Error((err || '').toString().trim())); });
 
 	// send metadata
 	setImmediate(function(){
