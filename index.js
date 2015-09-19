@@ -16,15 +16,15 @@ PDFGenerator.prototype.run = function run(request, options) {
 	// add custom headers
 	if(typeof request.headers === 'object') Object.keys(request.headers).forEach(function(key) {
 		args.push('--header');
-		args.push(key);
-		args.push(request.headers[key]);
+		args.push(sanitize(key));
+		args.push(sanitize(request.headers[key]));
 	});
 
 	// add cookies
 	if(typeof request.cookies === 'object') Object.keys(request.cookies).forEach(function(key) {
 		args.push('--cookie');
-		args.push(key);
-		args.push(request.cookies[key]);
+		args.push(sanitize(key));
+		args.push(sanitize(request.cookies[key]));
 	});
 
 	// add options
@@ -32,11 +32,11 @@ PDFGenerator.prototype.run = function run(request, options) {
 	options['page-size'] = options['page-size'] || 'letter';
 	Object.keys(options).forEach(function(key) {
 		args.push('--' + key);
-		args.push(options[key]);
+		args.push(sanitize(options[key]));
 	});
 
 	// set input/output modes
-	args.push(request.url);
+	args.push(sanitize(request.url));
 	args.push('-');
 
 	// spawn the external process
