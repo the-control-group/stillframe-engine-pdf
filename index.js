@@ -11,7 +11,7 @@ function PDFGenerator(config) {
 }
 
 PDFGenerator.prototype.run = function run(request, options) {
-	var args = ['--quiet'];
+	var args = [this.config.command || 'wkhtmltopdf', '--quiet'];
 
 	// add custom headers
 	if(typeof request.headers === 'object') Object.keys(request.headers).forEach(function(key) {
@@ -40,12 +40,12 @@ PDFGenerator.prototype.run = function run(request, options) {
 	args.push('-');
 
 	// spawn the external process
-	var child = spawn(this.config.command || 'wkhtmltopdf', args);
+	var child = spawn('/bin/sh', ['-c', args.join(' ') + ' | cat']);
 	var stream = child.stdout;
 
 	// handle errors
 	child.on('error', function(err) { stream.emit('error', err); });
-	// child.stderr.on('data', function(err) { stream.emit('error', new Error((err || '').toString().trim())); });
+	child.stderr.on('data', function(err) { stream.emit('error', new Error((err || '').toString().trim())); });
 
 	// send metadata
 	setImmediate(function(){
