@@ -38,9 +38,10 @@ PDFGenerator.prototype.run = function run(request, options) {
 	// add options
 	options = options || {};
 	options['page-size'] = options['page-size'] || 'letter';
+	options['image-quality'] = options['image-quality'] || 80;
 	Object.keys(options).forEach(function(key) {
 		args.push('--' + key);
-		args.push(sanitize(options[key]));
+		if (options[key] !== null && options[key] !== '') args.push(sanitize(options[key]));
 	});
 
 	// set input/output modes
